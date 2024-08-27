@@ -1,8 +1,9 @@
 from lib2to3.fixes.fix_input import context
 from sys import exception
-from .forms import NewAccount,LoginForm
+# from .ModelForm import NewAccount,LoginForm
+from .ModelForm import AccountForm
 from django.http import HttpResponse
-from django.shortcuts import render, redirect,get_object_or_404
+from django.shortcuts import render, redirect
 from .models import*
 from django.shortcuts import get_object_or_404
 from .models import Account
@@ -11,31 +12,33 @@ from .models import Account
 # Create your views here
 
 def create_account(request):
-    context = {}
+    # context = {}
 
     if request.method == 'POST':
-        form = NewAccount(request.POST, request.FILES)
-        # if form.is_valid():
+        form = AccountForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.save()
+            return redirect('login')
         # print(request.POST)
         # print(request.FILES['profile_image'])
 
         # form = NewAccount(request.POST)
         # context['form'] = form
-        if form.is_valid():
-            id = form.cleaned_data['id']
-            name = form.cleaned_data['name']
-            email = form.cleaned_data['email']
-            password = form.cleaned_data['password']
-            image = form.cleaned_data['image']
+        # if form.is_valid():
+        #     id = form.cleaned_data['id']
+        #     name = form.cleaned_data['name']
+        #     email = form.cleaned_data['email']
+        #     password = form.cleaned_data['password']
+        #     image = form.cleaned_data['image']
 
 
-            Account.create_account(id,name,email,password,image)
-            return redirect('login')
+            # Account.create_account(id,name,email,password,image)
+            # return redirect('login')
             # print('success')
     else:
-        form = NewAccount()
-        context['form'] = form
-    return render(request, 'account/create_account.html', context)
+        form = AccountForm()
+        # context['form'] = form
+    return render(request, 'account/create_account.html', {'form': form})
 
 
 def update_account(request, id):
@@ -43,16 +46,23 @@ def update_account(request, id):
     account = get_object_or_404(Account, pk=id)
 
     if request.method == 'POST':
+        form = AccountForm(request.POST,request.FILES, instance=account)
+        if form.is_valid():
+            form.save()
+            return redirect('account_detail', id=account.id)
+    else:
+        form = AccountForm(instance=account)
+    return render(request,'account/update_account.html',{'form': form})
 
-        account.name = request.POST.get('name')
-        account.email = request.POST.get('email')
-        account.password = request.POST.get('password')
-        account.save()
-        return redirect('account/update_account.html')
-
-
-    context = {'id': id, 'account': account}
-    return render (request, 'account/update_account.html', context)
+        # account.name = request.POST.get('name')
+        # account.email = request.POST.get('email')
+        # account.password = request.POST.get('password')
+        # account.save()
+    #     return redirect('account/update_account.html')
+    #
+    #
+    # context = {'id': id, 'account': account}
+    # return render (request, 'account/update_account.html', context)
 
 
 
@@ -73,7 +83,7 @@ def delete_account(request, id):
 def login(request):
     context = {}
     if request.method == 'POST':
-        form = LoginForm(request.POST)
+        form = AccountForm(request.POST)
         if form.is_valid():
             email = form.cleaned_data['email']
             password = form.cleaned_data['password']
@@ -84,7 +94,7 @@ def login(request):
             except Account.DoesNotExist:
                 context['error'] = "Invalid email or password"
     else:
-        form = LoginForm()
+        form = AccountForm()
     context['form'] = form
     return render(request , 'account/account_login.html', context)
 
